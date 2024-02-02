@@ -218,6 +218,44 @@ end)
 
 -- open clipboard
 mp.register_script_message('open-clipboard', function(action)
+    -- get clipboard
+    -- https://github.com/mpv-player/mpv/blob/26a51464b68ce2571bdbe538da9c0a1c255b879f/player/lua/console.lua#L1232-L1256
+    local res = utils.subprocess({
+        args = { 'powershell', '-NoProfile', '-Command', [[& {
+            Trap {
+                Write-Error -ErrorRecord $_
+                Exit 1
+            }
+
+            $clip = ""
+            if (Get-Command "Get-Clipboard" -errorAction SilentlyContinue) {
+                $clip = Get-Clipboard -Raw -Format Text -TextFormatType UnicodeText
+            } else {
+                Add-Type -AssemblyName PresentationCore
+                $clip = [Windows.Clipboard]::GetText()
+            }
+
+            $clip = $clip -Replace "`r",""
+            $u8clip = [System.Text.Encoding]::UTF8.GetBytes($clip)
+            [Console]::OpenStandardOutput().Write($u8clip, 0, $u8clip.Length)
+        }]] },
+        playback_only = false,
+    })
+    if res.error then
+        return
+    end
+    local path = res.stdout
+    -- if not a protocol
+    -- https://github.com/jonniek/mpv-playlistmanager/blob/579490c7ae1becc129736b7632deec4f3fb90b99/playlistmanager.lua#L450-L452
+    local is_protocol = path:match('^%a[%a%d-_]+://') ~= nil
+    if not is_protocol then
+        local info = utils.file_info(path)
+        -- path does not exist
+        if not info then
+            mp.osd_message('No such file or directory')
+            return
+        end
+    end
     open_action = action
     mp.commandv('script-message-to', 'menu', 'clipboard/get', mp.get_script_name())
 end)
