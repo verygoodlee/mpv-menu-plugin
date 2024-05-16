@@ -661,6 +661,11 @@ end)
 -- detect uosc installation
 mp.register_script_message('uosc-version', function() has_uosc = true end)
 
+local commit_menu_timer = mp.add_timeout(0.1, function()
+    msg.debug('commit menu items: ' .. menu_prop)
+    mp.set_property_native(menu_prop, menu_items)
+end, true)
+
 -- update menu on idle, this reduces the update frequency
 mp.register_idle(function()
     if have_dirty_menus then
@@ -674,8 +679,8 @@ mp.register_idle(function()
     end
 
     if menu_items_dirty then
-        msg.debug('commit menu items: ' .. menu_prop)
-        mp.set_property_native(menu_prop, menu_items)
+        commit_menu_timer:kill()
+        commit_menu_timer:resume()
         menu_items_dirty = false
     end
 end)
