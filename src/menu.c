@@ -14,6 +14,7 @@ static int append_menu(HMENU hmenu, UINT fMask, UINT fType, UINT fState,
     mii.cbSize = sizeof(mii);
     mii.fMask = MIIM_ID | fMask;
     mii.wID = id++;
+    if (id > 0xFFFF) id = WM_USER + 100;
 
     if (fMask & MIIM_FTYPE) mii.fType = fType;
     if (fMask & MIIM_STATE) mii.fState = fState;
@@ -141,7 +142,7 @@ static void build_menu(void *talloc_ctx, HMENU hmenu, mpv_node *node) {
 // update HMENU if menu node changed
 void update_menu(plugin_ctx *ctx, mpv_node *node) {
     while (GetMenuItemCount(ctx->hmenu) > 0)
-        RemoveMenu(ctx->hmenu, 0, MF_BYPOSITION);
+        DeleteMenu(ctx->hmenu, 0, MF_BYPOSITION);
     talloc_free_children(ctx->hmenu_ctx);
     build_menu(ctx->hmenu_ctx, ctx->hmenu, node);
 }
