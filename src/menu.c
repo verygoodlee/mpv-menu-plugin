@@ -140,8 +140,10 @@ static void build_menu(void *talloc_ctx, HMENU hmenu, mpv_node *node) {
 
 // update HMENU if menu node changed
 void update_menu(plugin_ctx *ctx, mpv_node *node) {
-    while (GetMenuItemCount(ctx->hmenu) > 0)
+    while (GetMenuItemCount(ctx->hmenu) > 0) {
+        DestroyMenu(GetSubMenu(ctx->hmenu, 0));
         RemoveMenu(ctx->hmenu, 0, MF_BYPOSITION);
+    }
     talloc_free_children(ctx->hmenu_ctx);
     build_menu(ctx->hmenu_ctx, ctx->hmenu, node);
 }
